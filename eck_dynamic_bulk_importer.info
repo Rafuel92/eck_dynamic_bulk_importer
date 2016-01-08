@@ -1,0 +1,4 @@
+name = Eck Dynamic Bulk Importer
+description = Dynamic ECK importer
+core = 7.x
+dependencies[] = eck
