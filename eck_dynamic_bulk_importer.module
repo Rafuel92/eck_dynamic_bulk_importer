@@ -22,7 +22,7 @@ function eck_dynamic_bulk_importer_menu() {
     'page arguments' => array('eck_dynamic_bulk_importer_fields_form'),
     'access arguments' => array('administer site configuration'),
   );
-  $items ['data-import'] = array (
+  $items ['eck-dynamic-importer-data-import'] = array (
     'title' => 'Add data from CSV file',
     'page callback' => 'drupal_get_form',
     'page arguments' => array ('eck_dynamic_bulk_importer_form'),
@@ -130,23 +130,38 @@ function eck_dynamic_bulk_importer_decorate_entity_bundles_with_fields($enabled_
 
 function eck_dynamic_bulk_importer_settings() {
   $entity_list = entity_get_info();
+  $default_enabled_entities = variable_get('eck_dynamic_bulk_importer_enabled_entitise',false);
+  if ($default_enabled_entities) {
+	  $enabled_entities_structure_default = json_decode($default_enabled_entities);
+  }
   foreach ($entity_list as $entity_name => $entity_value) {
     if (isset($entity_value['module']) && !empty($entity_value['module'])) {
       if ($entity_value['module'] == 'eck') {
         $eck_entity[$entity_name] = $entity_value;
+        $is_checked = false;
+        if (isset($enabled_entities_structure_default->enabled_entity_types->{$entity_name})) {
+					$is_checked = true;
+	      }
         //Iteration Entities
         $form['entity_enable'][$entity_name] = array(
           '#type' => 'fieldset',
           '#title' => ucfirst($entity_name),
           '#collapsible' => TRUE,
           '#collapsed' => FALSE,
+          '#default_value' => $is_checked,
         );
         //Iteration Bundles
         foreach ($entity_value['bundles'] as $bundle_name => $bundle) {
+	        $bundle_is_checked = false;
+	        if(isset($enabled_entities_structure_default->enabled_entity_types->{$entity_name})){
+		        if(in_array($bundle_name, $enabled_entities_structure_default->enabled_entity_types->{$entity_name})) {
+		        	$bundle_is_checked = true;		        
+		        }
+	        }
           $form['entity_enable'][$entity_name][$entity_name . "--" . $bundle_name] = array(
             '#type' => 'checkbox',
             '#title' => ucfirst($bundle_name),
-            '#default_value' => $bundle_name,
+            '#default_value' => $bundle_is_checked,
           );
         }
       }
