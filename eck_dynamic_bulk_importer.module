@@ -33,7 +33,7 @@ function eck_dynamic_bulk_importer_menu() {
  
 
 function eck_dynamic_bulk_importer_get_enabled_entities_and_bundles() {
-	$received_json = array(
+	/* $received_json = array(
 		'enabled_entity_types' => array(
 			'veicolo' => array(
 				'auto'
@@ -41,6 +41,8 @@ function eck_dynamic_bulk_importer_get_enabled_entities_and_bundles() {
 		)
 	);
 	$received_json = json_encode($received_json);	
+	*/
+	$received_json = variable_get('eck_dynamic_bulk_importer_enabled_entitise',false);
 	$enabled_entity_fields_mapping = json_decode($received_json); 
 	return $enabled_entity_fields_mapping;
 }
@@ -57,8 +59,6 @@ function eck_dynamic_bulk_importer_get_enabled_fields_default_values() {
 * implements hook_form
 */  
 function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
-	$form = array();
-	//end simulation
 	$enabled_entity_fields_mapping = eck_dynamic_bulk_importer_get_enabled_entities_and_bundles();
 	$def_values = eck_dynamic_bulk_importer_get_enabled_fields_default_values();
 	foreach($enabled_entity_fields_mapping->enabled_entity_types as $entity => $bundles){
@@ -76,9 +76,21 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 				  '#collapsed' => FALSE,
 				);
 				$all_fields = field_info_instances($entity, $v);
+				//concat properties
+				$all_fields += array(
+					'title'=>'title',
+					'uid' => 'uid',
+					'author' => 'author',
+					'created' => 'created',
+					'changed' => 'changed',
+				);
 				foreach($all_fields as $field_name => $infos){
-					if(in_array($field_name,$def_values->enabled_entity_types->{$entity}->{$v})){
-						$default_value = 1;
+					if(isset($def_values->enabled_entity_types->{$entity}->{$v}))	{
+						if(in_array($field_name,$def_values->enabled_entity_types->{$entity}->{$v})){
+							$default_value = 1;
+						} else {
+							$default_value = 0;
+						}
 					} else {
 						$default_value = 0;
 					}
@@ -87,7 +99,7 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 						'#title'=> $field_name,
 						'#default_value' => $default_value
 					);
-				}
+			}	
 		}
 	}
 	$form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
@@ -189,6 +201,7 @@ function eck_dynamic_bulk_importer_settings_submit($form , &$form_state) {
  *  Implements hook_form().
  */
 function eck_dynamic_bulk_importer_form($form, &$form_state){
+  /*
   //simulate start
   $received_json = array();
   $received_json['enabled_entity_types'] = array(
@@ -196,12 +209,16 @@ function eck_dynamic_bulk_importer_form($form, &$form_state){
       'auto' , 'moto',
     ),
   );
-  $received_json = json_encode($received_json);
+  $received_json = json_encode($received_json); 
   //simulate end
-  
-  //start
-  $array_of_enabled_fields = json_decode($received_json);  
+  */
+  $array_of_enabled_fields = eck_dynamic_bulk_importer_get_enabled_entities_and_bundles();  
   $form = array ();
+  if(!$array_of_enabled_fields){
+	  $link = l(t('ECK Dynamic config'),'admin/config/eck-dynamic-importer');
+	  drupal_set_message(t("Enable entities and fields in this section $link"));
+	  return $form;
+  }
   foreach($array_of_enabled_fields->enabled_entity_types as $entity_name => $entity){
     foreach($entity as $bundle_name => $bundle){
       $options[$bundle] = $entity_name.'--'.$bundle;
@@ -215,7 +232,7 @@ function eck_dynamic_bulk_importer_form($form, &$form_state){
   $form ['upload_field'] = array (
     '#type' => 'file',
     '#title' => t ( 'Choose a file' ),
-  );
+  );		
   $form ['submit'] = array (
     '#type' => 'submit',
     '#value' => t ( 'Import file csv' ),
@@ -230,21 +247,32 @@ function eck_dynamic_bulk_importer_data_import_can_import(){
 
 //Submit form eck_dynamic_bulk_importer_form
 function eck_dynamic_bulk_importer_form_submit($form, &$form_state) {
-  //simulate start
+  /*
+	//simulate start
   $received_json = array();
   $received_json['enabled_fields'] = array(
     'field1','field3' 
   );
   $received_json = json_encode($received_json);
-  //simulate end
-  
-  //recupero il bundle name
-  $bundle_type = $form_state['values']['bundle'];
-
-  //start
-  $array_of_enabled_fields = json_decode($received_json);
-  
-  $filepath = 'public://import-data';   //inserisco il file appena caricato nella cartella "import-data"
+  //simulate end 
+  */
+  $count = 0;
+	$entity_structure = eck_dynamic_bulk_importer_get_enabled_fields_default_values();
+	//recupero il bundle name
+	$bundle_type = $form_state['values']['bundle'];
+	// Recupero gli input del form
+	$form_choose = $form_state['complete form']['bundle']['#options'][$bundle_type];
+	$choosed_structure = explode('--', $form_choose);
+	// Recupero l'entità
+	$choosed_entity = $choosed_structure[0];
+	// Recupero il bundle
+	$choosed_bundle = $choosed_structure[1];
+  $entity_type = $choosed_entity;
+  $bundle_type = $choosed_bundle;
+	$array_of_enabled_fields = new StdClass();
+	$array_of_enabled_fields->enabled_fields = $entity_structure->enabled_entity_types->{$choosed_entity}->{$choosed_bundle};
+  $filepath = 'public://import-data';
+  //inserisco il file appena caricato nella cartella "import-data"
   // verifico che il path esiste
   file_prepare_directory ( $filepath, FILE_CREATE_DIRECTORY );
   $file = file_save_upload ( 'upload_field', array (
@@ -254,8 +282,6 @@ function eck_dynamic_bulk_importer_form_submit($form, &$form_state) {
   ), $filepath, FILE_EXISTS_REPLACE );
   $file->status = FILE_STATUS_PERMANENT;
   $file = file_save ( $file );
-  //dpm('File salvato');
-  
   ini_set ( 'auto_detect_line_endings', TRUE );
   if (($handle = fopen ( $file->uri, "r" )) != FALSE) {
     // con il ciclo while ciclo le righe
@@ -271,31 +297,39 @@ function eck_dynamic_bulk_importer_form_submit($form, &$form_state) {
       $col = 0;
       // con il ciclo for ciclo le colonne di quella riga
       while ( $col < $num ) {
-        if ($col < count($array_of_enabled_fields)) {
-          //dpm($data);
           $array_associativo = array();
           foreach ($data as $key => $field ){
-            //dpm($field);
             $array_associativo[$array_of_enabled_fields->enabled_fields[$key]] = $field;
           }
-          dpm($array_associativo);
-          dpm('Creo entità');
           //creo l'entità con i field ottenuti
-          /*
           $entity = entity_create($entity_type, array('type' =>$bundle_type));
           foreach($array_associativo as $field => $field_value){
-            $entity->$field[LANGUAGE_NONE][0] = $field_value;  
+						if(strpos($field, 'field_')!==false){
+            	$entity->{$field}[LANGUAGE_NONE][0] = $field_value;
+            } elseif($field == 'author' || $field == 'uid'){
+	            $account = user_load_by_name($field_value);
+	            if(!$account){
+		            drupal_set_message(t("User $field_value of author property does not exists"),'error');
+								return;
+	            }
+	            $entity->{$field} = $account->uid;
+	          } else {
+	            $entity->{$field} = $field_value;
+            }
           }
-          entity_save($entity_type, $entity);
-          */
-        }
-        else{ 
-          break; 
-        }
+          if($col+1 == $num){
+	          try {
+		          entity_save($choosed_entity,$entity);
+		          $count ++;
+	          } catch(Exception $e) {
+		          dpm($e);
+	          }             
+          }
         $col ++;
       }
     }
     fclose ( $handle );
     ini_set ( 'auto_detect_line_endings', FALSE );
+    drupal_set_message(t("$count Entities has been saved"));
   }
 }
