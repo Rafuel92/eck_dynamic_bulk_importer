@@ -4,15 +4,21 @@
 * implements hook_menu
 */
 function eck_dynamic_bulk_importer_menu() {
-  $items['admin/config/ck-dynamic-importer'] = array(
+	$items['admin/config/eck-dynamic-importer'] = array(
     'title' => 'ECK Dynamic Bulk Importer',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('eck_dynamic_bulk_importer_settings'),
     'access arguments' => array('administer site configuration')
   );
-  $items['admin/config/eck-dynamic-importer/fields'] = array(
-    'title' => t('ECK Dynamic Importer'), 
+  $items['admin/config/eck-dynamic-importer/tab1'] = array(
+    'title' => 'Enabled Entities',
     'page callback' => 'drupal_get_form',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/config/eck-dynamic-importer/tab2'] = array(
+    'title' => 'Enabled Fields', 
+    'page callback' => 'drupal_get_form',
+    'type' => MENU_LOCAL_TASK,
     'page arguments' => array('eck_dynamic_bulk_importer_fields_form'),
     'access arguments' => array('administer site configuration'),
   );
