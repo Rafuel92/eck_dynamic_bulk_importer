@@ -80,57 +80,56 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 		  '#collapsed' => FALSE,
 		);
 		foreach($bundles as $k => $v) {
-				$form['group_'.$entity]['field_'.$v] = array(
-					'#type' => 'fieldset', 
-					'#title' => $entity . "-" . $v, 
-				  '#collapsible' => TRUE, 
-				  '#collapsed' => FALSE,
-				);
-				$all_fields = field_info_instances($entity, $v);
-				//concat properties
-				$all_fields += array(
-					'title'=>'title',
-					'uid' => 'uid',
-					'author' => 'author',
-					'created' => 'created',
-					'changed' => 'changed',
-				);
-				foreach($all_fields as $field_name => $infos){
-					if(isset($def_values->enabled_entity_types->{$entity}->{$v}))	{
-						if(isset($def_values) && !empty($def_values) && in_array($field_name,$def_values->enabled_entity_types->{$entity}->{$v})){
-							$default_value = 1;
-						} else {
-							$default_value = 0;
-						}
+			$form['group_'.$entity]['field_'.$v] = array(
+				'#type' => 'fieldset', 
+				'#title' => $entity . "-" . $v, 
+			  '#collapsible' => TRUE, 
+			  '#collapsed' => FALSE,
+			);
+			$all_fields = field_info_instances($entity, $v);
+			//concat properties
+			$all_fields += array(
+				'title'=>'title',
+				'uid' => 'uid',
+				'author' => 'author',
+				'created' => 'created',
+				'changed' => 'changed',
+			);
+			foreach($all_fields as $field_name => $infos){
+				if(isset($def_values->enabled_entity_types->{$entity}->{$v}))	{
+					if(isset($def_values) && !empty($def_values) && in_array($field_name,$def_values->enabled_entity_types->{$entity}->{$v})){
+						$default_value = 1;
 					} else {
 						$default_value = 0;
 					}
-					//weight of field
-					$key_object = "dyn_eck_importer--".$entity."--".$v."--".$field_name;
-					if(isset($weight->$key_object) && !empty($weight->$key_object)){	
-						$current_weight = $weight->$key_object;
-					} else {
-						$current_weight++;
-					}
-					
-					//@TODO terminare ordinamento field
-					$form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name] = array(
-						'#type' => 'checkbox',
-						'#title'=> $field_name,
-						'#weight' =>$current_weight,
-						'#default_value' => $default_value
-						
-					);
-					
-					
-					$form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name."--weight"] = array(
-						'#type' => 'textfield',
-						'#title' => $field_name.' weight',
-						'#default_value' =>$current_weight
-					);
+				} else {
+					$default_value = 0;
 				}
-			}	
-		}
+				//weight of field
+				$key_object = "dyn_eck_importer--".$entity."--".$v."--".$field_name;
+				if(isset($weight->$key_object) && !empty($weight->$key_object)){	
+					$current_weight = $weight->$key_object;
+				} else {
+					$current_weight++;
+				}
+				
+				//@TODO terminare ordinamento field
+				$form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name] = array(
+					'#type' => 'checkbox',
+					'#title'=> $field_name,
+					'#weight' =>$current_weight,
+					'#default_value' => $default_value
+					
+				);
+				
+				
+				$form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name."--weight"] = array(
+					'#type' => 'textfield',
+					'#title' => $field_name.' weight',
+					'#default_value' =>$current_weight
+				);
+			}
+		}		
 	}
 	$form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
 	$form['#submit'][] = 'eck_dynamic_bulk_importer_save_fields_settings';
