@@ -293,6 +293,9 @@ function eck_dynamic_bulk_importer_save_fields_settings(&$form,&$form_state){
 	$decorated_entity_fields_mapping = eck_dynamic_bulk_importer_decorate_entity_bundles_with_fields($enabled_entity_fields_mapping,$values);
 	$json_encoded_field_structures_array = json_encode($decorated_entity_fields_mapping);	
 	variable_set('eck_dynamic_bulk_importer_field_structures',$json_encoded_field_structures_array);
+    if (isset($form_state['triggering_element']['#download_button'])) {
+      eck_dynamic_bulk_importer_download_csv_example ($form,$form_state);
+    }
 }
 
 
