@@ -19,7 +19,7 @@ function eck_dynamic_bulk_importer_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   $items['admin/config/eck-dynamic-importer/tab2'] = array(
-    'title' => 'Enabled Fields', 
+    'title' => 'Enabled Fields',
     'page callback' => 'drupal_get_form',
     'type' => MENU_LOCAL_TASK,
     'page arguments' => array('eck_dynamic_bulk_importer_fields_form'),
@@ -43,7 +43,7 @@ function eck_dynamic_bulk_importer_menu() {
  */
 function eck_dynamic_bulk_importer_get_enabled_entities_and_bundles() {
 	$received_json = variable_get('eck_dynamic_bulk_importer_enabled_entitise',false);
-	$enabled_entity_fields_mapping = json_decode($received_json); 
+	$enabled_entity_fields_mapping = json_decode($received_json);
 	return $enabled_entity_fields_mapping;
 }
 
@@ -60,7 +60,7 @@ function eck_dynamic_bulk_importer_get_enabled_fields_default_values() {
 	} else {
 		$def_values = NULL;
 	}
-	return $def_values;	
+	return $def_values;
 }
 
 /**
@@ -75,7 +75,7 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 	$weight = variable_get('eck_dynamic_bulk_importer_field_weight', '');
 	$current_weight = 0;
 	if($weight != '' ){
-			$weight = json_decode($weight);		
+			$weight = json_decode($weight);
 	}
 	if(!isset($enabled_entity_fields_mapping->enabled_entity_types)) {
 		$form['markup'] = array(
@@ -86,16 +86,16 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 
 	foreach($enabled_entity_fields_mapping->enabled_entity_types as $entity => $bundles){
 		$form['group_'.$entity] = array(
-			'#type' => 'fieldset', 
-			'#title' => $entity, 
-		  '#collapsible' => TRUE, 
+			'#type' => 'fieldset',
+			'#title' => $entity,
+		  '#collapsible' => TRUE,
 		  '#collapsed' => FALSE,
 		);
 		foreach($bundles as $k => $v) {
 			$form['group_'.$entity]['field_'.$v] = array(
-				'#type' => 'fieldset', 
-				'#title' => $entity . "-" . $v, 
-			  '#collapsible' => TRUE, 
+				'#type' => 'fieldset',
+				'#title' => $entity . "-" . $v,
+			  '#collapsible' => TRUE,
 			  '#collapsed' => FALSE,
 			);
 			$all_fields = field_info_instances($entity, $v);
@@ -110,7 +110,7 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 			$loop = true;
 			$eck_dynamic_bulk_importer_field_weight = variable_get('eck_dynamic_bulk_importer_field_weight');
 			$variable_get_value = json_decode($eck_dynamic_bulk_importer_field_weight);
-			
+
 			foreach($all_fields as $field_name => $infos){
 				if(isset($def_values->enabled_entity_types->{$entity}->{$v}))	{
 					if(isset($def_values) && !empty($def_values) && in_array($field_name,$def_values->enabled_entity_types->{$entity}->{$v})){
@@ -123,7 +123,7 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 				}
 				//weight of field
 				$key_object = "dyn_eck_importer--".$entity."--".$v."--".$field_name;
-				if(isset($weight->$key_object) && !empty($weight->$key_object)){	
+				if(isset($weight->$key_object) && !empty($weight->$key_object)){
 					$current_weight = $weight->$key_object;
 				} else {
 					$current_weight++;
@@ -137,10 +137,10 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 				}
 
 				//@TODO terminare ordinamento field
-				
+
 				if($loop){
 					$markup_prefix = '<table><tr><td>';
-					$loop = false;										
+					$loop = false;
 				} else{
 					$markup_prefix = '<tr><td>';
 				}
@@ -150,14 +150,14 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 					'#title'=> $field_name,
 					'#prefix' => $markup_prefix,
 					'#weight' =>$current_weight,
-					'#default_value' => $default_value					
+					'#default_value' => $default_value
 				);
 
-				
-				
+
+
 				$markup_prefix = '</td><td>';
 				$markup_suffix = '</td></tr>';
-				
+
 
 				$form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name."--weight"] = array(
 					'#type' => 'textfield',
@@ -170,8 +170,8 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state){
 			}
 			$current_suffix = $form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name."--weight"]['#suffix'];
 			$form['group_'.$entity]['field_'.$v]["dyn_eck_importer--".$entity."--".$v."--".$field_name."--weight"]['#suffix'] = $current_suffix.'</table>';
-			
-		}		
+
+		}
 	}
 	$form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
 
@@ -279,19 +279,19 @@ function eck_dynamic_bulk_importer_save_fields_settings(&$form,&$form_state){
 			$field = $result['2'];
 			$order_field = $value_field;
 			if($values[$key] == 1){
-				$weight_field[$entity][$bundle][$order_field] = $field;			
+				$weight_field[$entity][$bundle][$order_field] = $field;
 			}
 	    unset($values[$key_field]);
 		}
 	}
 	foreach($weight_field as $current_entity => $current_value){
-		$current_bundle = key($current_value);		
-		ksort($weight_field[$current_entity][$current_bundle]);		
+		$current_bundle = key($current_value);
+		ksort($weight_field[$current_entity][$current_bundle]);
 	}
-	$weight_field_json = json_encode($weight_field);		
+	$weight_field_json = json_encode($weight_field);
 	variable_set('eck_dynamic_bulk_importer_field_weight',$weight_field_json);
 	$decorated_entity_fields_mapping = eck_dynamic_bulk_importer_decorate_entity_bundles_with_fields($enabled_entity_fields_mapping,$values);
-	$json_encoded_field_structures_array = json_encode($decorated_entity_fields_mapping);	
+	$json_encoded_field_structures_array = json_encode($decorated_entity_fields_mapping);
 	variable_set('eck_dynamic_bulk_importer_field_structures',$json_encoded_field_structures_array);
     if (isset($form_state['triggering_element']['#download_button'])) {
       eck_dynamic_bulk_importer_download_csv_example ($form,$form_state);
