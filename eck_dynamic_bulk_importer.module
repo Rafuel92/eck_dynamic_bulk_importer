@@ -131,7 +131,7 @@ function eck_dynamic_bulk_importer_fields_form($form, &$form_state) {
         else {
           $current_weight++;
         }
-        $arr = (array)$variable_get_value->$entity->$v;
+        $arr = isset($variable_get_value->$entity->$v) ? (array)$variable_get_value->$entity->$v : array();
         if (in_array($field_name, $arr)) {
           $default_value_weight = array_search($field_name, $arr);
         }
@@ -209,7 +209,7 @@ function eck_dynamic_bulk_importer_download_csv_example(&$form, &$form_state) {
       //chiudo il file
       fclose($examplefile);
       crea_zip_file($path_csv, $path_zip . '/example.zip');
-      $file_uri = file_create_url(file_build_uri('eck_dynamic_bulk_importer_file/zip/example.zip'));
+      $file_uri = file_create_url(file_build_uri('eck_dynamic_bulk_importer_file/csv/'.$name_bundle.'.csv'));
       drupal_goto($file_uri);
   }
 }
@@ -536,7 +536,7 @@ function eck_dynamic_bulk_importer_form_submit($form, &$form_state) {
         $entity = entity_create( $entity_type, array( 'type' => $bundle_type ));
         foreach ( $array_associativo as $field => $field_value ) {
           if ( strpos( $field, 'field_' ) !== FALSE ) {
-            $entity->{$field}[LANGUAGE_NONE][0] = $field_value;
+            $entity->{$field}[LANGUAGE_NONE][0]['value'] = $field_value;
           }
           elseif ( $field == 'author' || $field == 'uid' ) {
             $account = user_load_by_name( $field_value );
