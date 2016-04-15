@@ -1,5 +1,1 @@
-name = Eck Dynamic Bulk Importer
-description = Dynamic ECK importer
-core = 7.x
-configure = admin/config/eck-dynamic-importer
-dependencies[] = eck
+name = eck_dynamic_bulk_importer
